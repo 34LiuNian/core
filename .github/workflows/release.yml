@@ -154,17 +154,13 @@ jobs:
       - name: Copy .env
         run: |
           cp .env.example .env
-      - name: Build and export to Docker
+      - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           load: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }},innei/mx-server:latest
-          platforms: |
-            linux/amd64
-            linux/arm64
-            linux/s390x
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Test
@@ -178,15 +174,18 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build and push Docker image
         id: docker_build
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          platforms: |
-            linux/amd64
-            linux/arm64
-            linux/s390x
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Save Docker image as artifact
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: mx-space
+          path: ${{ github.workspace }}/innei/mx-server:latest
